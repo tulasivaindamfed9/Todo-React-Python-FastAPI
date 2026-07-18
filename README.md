@@ -1,16 +1,75 @@
-# React + Vite
+# Todo App - React + Redux Toolkit + Python FastAPI + PostgreSQL
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack Todo application built using **React**, **Redux Toolkit**, **Python (FastAPI)**, and **PostgreSQL**. The application allows users to create, update, delete, and complete tasks with persistent database storage.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* Add a new task
+* Edit an existing task
+* Delete a task
+* Mark tasks as completed
+* View pending and completed tasks separately
+* Toast notifications for user actions
+* Redux Toolkit for state management
+* RESTful APIs using FastAPI
+* PostgreSQL database integration
+* Environment variable support using `.env`
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Frontend
 
-## Expanding the ESLint configuration
+* React (Vite)
+* JavaScript (ES6+)
+* Redux Toolkit
+* React Redux
+* Axios
+* React Toastify
+* CSS
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Backend
+
+* Python
+* FastAPI
+* SQLAlchemy
+* Pydantic
+* Uvicorn
+
+### Database
+
+* PostgreSQL
+
+## Project Structure
+
+```text
+Frontend
+├── components
+├── redux
+├── services
+├── app
+├── App.jsx
+└── .env
+
+Backend
+├── main.py
+├── database.py
+├── database_models.py
+├── models.py
+└── requirements.txt
+```
+
+
+## API Endpoints
+
+| Method | Endpoint              | Description                |
+| ------ | --------------------- | -------------------------- |
+| GET    | `/items`              | Retrieve all pending tasks |
+| GET    | `/completed-items`    | Retrieve completed tasks   |
+| POST   | `/item`               | Create a new task          |
+| PUT    | `/item/{id}`          | Update an existing task    |
+| PUT    | `/item/{id}/complete` | Mark a task as completed   |
+| DELETE | `/item/{id}`          | Delete a task              |
+
+
+
+**Tulasi Vaindam**
