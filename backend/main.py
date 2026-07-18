@@ -1,6 +1,6 @@
 from fastapi import FastAPI,Depends
 from fastapi.middleware.cors import CORSMiddleware
-from models import Item
+from models import ItemCreate,ItemResponse, ItemUpdate
 from database import SessionLocal, engine
 from sqlalchemy.orm import Session
 import database_models
@@ -20,8 +20,8 @@ def sayHi():
 
 
 Item_list=[
-    Item(id=1,title='title1'),
-    Item(id=2,title='title2')
+    ItemCreate(title='title1'),
+    ItemCreate(title='title2')
 
 ]
 
@@ -37,23 +37,31 @@ def get_db():
 def init_db():
    
     db=SessionLocal()
-    count=db.query(database_models.Item).count
+    try:
+        count=db.query(database_models.Item).count()
 
-    if count == 0:
-        for each in Item_list:
-          db.add(database_models.Item(**each.model_dump()))
-         #    model_dump will give dicionary and ** will unpack the model "each item".
-         # which means ** will give key value pairs(obj)
-
+        if count == 0:
+           for each in Item_list:
+              db.add(database_models.Item(title=each.title))
+        
         db.commit()
+    finally:    
+        db.close()
 
     
 init_db()
 
-@app.get('/items')
-def get_items(db:Session = Depends(get_db)):   
-    db_items= db.query(database_models.Item).all()
-    return db_items
+@app.get("/items")
+def get_items(db: Session = Depends(get_db)):
+    return db.query(database_models.Item).filter(
+        database_models.Item.is_completed == False
+    ).all()
+
+@app.get("/completed-items")
+def get_completed_items(db: Session = Depends(get_db)):
+    return db.query(database_models.Item).filter(
+        database_models.Item.is_completed == True
+    ).all()
 
 # to get one particular product based on id
 @app.get('/item/{id}')
@@ -65,33 +73,66 @@ def get_item_by_id(id: int, db:Session = Depends(get_db)):
     return "no matching id"    
 
 # post an item
-@app.post('/item')
-def post_item(item:Item, db:Session = Depends(get_db)):   # type hinting to accept the payload
-    db.add(database_models.Item(**item.model_dump()))
+# @app.post('/item')
+# def post_item(item:Item, db:Session = Depends(get_db)):   # type hinting to accept the payload
+#     db.add(database_models.Item(**item.model_dump()))
+#     db.commit()
+#     return item
+@app.post("/item", response_model=ItemResponse)
+def post_item(item: ItemCreate, db: Session = Depends(get_db)):
+    db_item = database_models.Item(title=item.title)
+
+    db.add(db_item)
     db.commit()
-    return item
+    db.refresh(db_item)
+
+    return db_item
 
 
 # update an item
-@app.put('/item')
-def update_item(id:int, itemToUpdate:Item, db:Session = Depends(get_db)):
-    db_item_update= db.query(database_models.Item).filter(database_models.Item.id==id).first()
+@app.put("/item/{id}")
+def update_item(id: int, itemToUpdate: ItemUpdate, db: Session = Depends(get_db)):
+    db_item = db.query(database_models.Item).filter(
+        database_models.Item.id == id
+    ).first()
 
-    if db_item_update:
-       db_item_update.title= itemToUpdate.title
-       db.commit()
-       return "item updated successfuly"
-    else:
-        return "item not found"   
+    if not db_item:
+        return {"message": "Item not found"}
+
+    db_item.title = itemToUpdate.title
+    db.commit()
+    db.refresh(db_item)
+
+    return db_item  
 
     
 #  delete an item based on id
-@app.delete('/item')
-def del_item(id:int, db:Session = Depends(get_db)):
-    db_item_to_delete=db.query(database_models.Item).filter(database_models.Item.id == id).first()
-    if db_item_to_delete:   
-      db.delete(db_item_to_delete)
-      db.commit()
-      return "item deleted successsfully"
-    else:
-        return "no item found to delete"  
+@app.delete("/item/{id}")
+def del_item(id: int, db: Session = Depends(get_db)):
+    db_item = db.query(database_models.Item).filter(
+        database_models.Item.id == id
+    ).first()
+
+    if not db_item:
+        return {"message": "Item not found"}
+
+    db.delete(db_item)
+    db.commit()
+
+    return {"message": "Deleted successfully"} 
+
+@app.put("/item/{id}/complete")
+def complete_task(id: int, db: Session = Depends(get_db)):
+    task = db.query(database_models.Item).filter(
+        database_models.Item.id == id
+    ).first()
+
+    if not task:
+        return {"message": "Task not found"}
+
+    task.is_completed = True
+
+    db.commit()
+    db.refresh(task)
+
+    return task

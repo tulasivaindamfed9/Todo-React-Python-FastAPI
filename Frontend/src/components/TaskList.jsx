@@ -13,14 +13,14 @@ function TaskList({
         {task.map((item, index) => (
           <li key={index} className="task-item">
 
-            <span>{item}</span>
+            <span>{item.title}</span>
 
             <div className="button-group">
 
            <button
   type="button"
   className="btn complete-btn"
-  onClick={() => handleCompleteTask(index)}
+  onClick={() => handleCompleteTask(item.id)}
 >
   Complete
 </button>
@@ -36,7 +36,7 @@ function TaskList({
 <button
   type="button"
   className="btn delete-btn"
-  onClick={() => handleDeleteTask(item)}
+  onClick={() => handleDeleteTask(item.id)}
 >
   Delete
 </button>

@@ -7,7 +7,7 @@ function CompletedTasks({ completedTask }) {
       <ul className="completed-list">
         {completedTask.map((item, index) => (
           <li key={index} className="completed-item">
-            {item}
+            {item.title}
           </li>
         ))}
       </ul>

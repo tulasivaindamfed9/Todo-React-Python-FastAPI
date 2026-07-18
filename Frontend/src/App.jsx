@@ -1,184 +1,139 @@
-// import { useState } from "react";
-// import reactLogo from "./assets/react.svg";
-// import viteLogo from "./assets/vite.svg";
-// import heroImg from "./assets/hero.png";
-// import "./App.css";
-
-// function App() {
-//   const [str, setStr] = useState("");
-//   const [task,setTask] = useState([]);
-//   const [completedTask, setCompletedTask] = useState([]);
-
-//   function handleInputChange(e) {
-//     setStr(e.target.value);
-//   }
-  
-//   function handleAddTask(){
-//     if(str.trim() != ""){
-//       setTask([...task, str]);
-//       setStr("");
-//     }
-//   }
-
-//   function handleEditTask(index){
-//   //  use input field to get the new task name
-//     const newTask = prompt("Enter the new task name:", task[index]);
-//     if(newTask != null && newTask.trim() != ""){
-//       const updatedTasks = [...task];
-//       updatedTasks[index] = newTask;
-//       setTask(updatedTasks);
-//     }
-//   }
-
-//   function handleCompleteTask(index){
-//      const completed=task[index];
-//      setCompletedTask([...completedTask,completed]);
-//     //  remove the completed task from the task list
-//      const updatedTasks = task.filter((item, i) => i !== index);
-//      setTask(updatedTasks);
-//   }
-
-
-//   function handleDeleteTask(taskname){
-//     const updatedTasks = task.filter((item)=>item !== taskname);
-//     setTask(updatedTasks);
-//   }
-//   return (
-//     <>
-//       <div className="maindiv">
-//         <h1 className="heading d-flex align-items-top p-3">List of Items</h1>
-//         {/* input field */}
-//         <div>
-//         <div className="input-group ">
-//           <input
-//             type="text"
-//             className="form-control"
-//             placeholder="Username"
-//             aria-label="Username"
-//             aria-describedby="addon-wrapping"
-//             onChange={(e) => handleInputChange(e)}
-//             value={str}
-//           />
-//         </div>
-//         <button type="button" className="btn btn-info"
-//         onClick={()=>handleAddTask()}>
-//           +
-//         </button>
-//         </div>
-
-//         {/* showing items entered in input field */}
-//         <div className="d-flex flex-column align-items-top p-3">
-//           <h3>Tasks to complete</h3>
-//           <ul>
-//             {task.map((item, index) => (
-//               <li key={index}>
-//                 {item}
-//                 <button type="button" className="btn btn-success" onClick={() => handleCompleteTask(index)}>
-//                   Complete
-//                 </button>
-//                 <button type="button" className="btn btn-warning" onClick={() => handleEditTask(index)}>
-//                  Edit
-//                 </button>
-//                 <button type="button" className="btn btn-danger" onClick={() => handleDeleteTask(item)}>
-//                   Delete
-//                 </button>
-//               </li>
-//             ))}
-//           </ul>
-//         </div>
-
-//         {/* Completed Tasks */}
-//         <div className="d-flex flex-column align-items-top p-3">
-//           <h2>Completed Tasks</h2>
-//           <ul>
-//             {completedTask.map((item, index) => (
-//               <li key={index}>
-//                 {item}
-//               </li>
-//             ))}
-//           </ul>
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
-
-// export default App;
-
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast ,ToastContainer} from "react-toastify";
 
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getTasks,
+  addTask,
+  updateTask,
+  completeTask,
+  getCompletedTasks,
+  deleteTask,
+} from "./redux/taskSlice";
 
 import TaskInput from "./components/TaskInput";
 import TaskList from "./components/TaskList";
 import CompletedTasks from "./components/CompletedTasks";
 
 function App() {
-  const [str, setStr] = useState("");
-  const [task, setTask] = useState([]);
-  const [completedTask, setCompletedTask] = useState([]);
+  const dispatch = useDispatch();
 
+  const { tasks, loading, error,completedTasks } = useSelector(
+    (state) => state.tasks
+  );
+
+  const [str, setStr] = useState("");
+ 
+  // Fetch tasks when component loads
+  useEffect(() => {
+    dispatch(getTasks());
+     dispatch(getCompletedTasks());
+    toast.success("Items fetched successfully")
+  }, [dispatch]);
+
+  // Handle input change
   function handleInputChange(e) {
     setStr(e.target.value);
   }
 
+  // Add task
   function handleAddTask() {
-    if (str.trim() !== "") {
-      setTask([...task, str]);
-      setStr("");
+    if (str.trim() === "") {
+      toast.error("please enter a task to continue")
+      return;
     }
+
+    const newTask = {
+      // id: Date.now(),
+      title: str,
+    };
+
+    dispatch(addTask(newTask));
+    toast.success("Task added successfully!")
+
+    setStr("");
   }
 
+  // Edit task
   function handleEditTask(index) {
-    const newTask = prompt("Enter the new task name:", task[index]);
+    const editedTask = prompt(
+      "Enter the new task",
+      tasks[index].title
+    );
 
-    if (newTask !== null && newTask.trim() !== "") {
-      const updatedTasks = [...task];
-      updatedTasks[index] = newTask;
-      setTask(updatedTasks);
+    if (
+      editedTask !== null &&
+      editedTask.trim() !== ""
+    ) {
+      dispatch(
+        updateTask({
+          id: tasks[index].id,
+          title: editedTask,
+        })
+      );
+      toast.success("Item edit successfull")
     }
   }
 
-  function handleCompleteTask(index) {
-    const completed = task[index];
+  // Complete task
+ async function handleCompleteTask(id) {
 
-    setCompletedTask([...completedTask, completed]);
+    await dispatch(completeTask(id)).unwrap();
 
-    const updatedTasks = task.filter((item, i) => i !== index);
-    setTask(updatedTasks);
+    dispatch(getTasks());
+
+    dispatch(getCompletedTasks());
+
+    toast.success("Task completed!");
+}
+
+  // Delete task
+  function handleDeleteTask(id) {
+    dispatch(deleteTask(id));
+    toast.success("Item deleted successfully")
   }
 
-  function handleDeleteTask(taskname) {
-    const updatedTasks = task.filter((item) => item !== taskname);
-    setTask(updatedTasks);
+  if (loading) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (error) {
+    return <h2>{error}</h2>;
   }
 
   return (
     <div className="maindiv">
-     
+      <h1 className="heading">List of Items</h1>
 
-         <h1 className="heading">
-      List of Items
-    </h1>
+      <TaskInput
+        str={str}
+        handleInputChange={handleInputChange}
+        handleAddTask={handleAddTask}
+      />
 
-        <TaskInput
-          str={str}
-          handleInputChange={handleInputChange}
-          handleAddTask={handleAddTask}
-        />
+      <TaskList
+        task={tasks}
+        handleCompleteTask={handleCompleteTask}
+        handleEditTask={handleEditTask}
+        handleDeleteTask={handleDeleteTask}
+      />
 
-        <TaskList
-          task={task}
-          handleCompleteTask={handleCompleteTask}
-          handleEditTask={handleEditTask}
-          handleDeleteTask={handleDeleteTask}
-        />
+      <CompletedTasks completedTask={completedTasks} />
 
-        <CompletedTasks completedTask={completedTask} />
-
-      </div>
-    
+      {/* toast container */}
+        <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        // theme="colored"
+      />
+    </div>
   );
 }
 
