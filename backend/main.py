@@ -8,7 +8,7 @@ import database_models
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://todo-react-python-fastapi.onrender.com/","https://todofastapi.vercel.app/"],
+    allow_origins=["http://localhost:5173", "https://todofastapi.vercel.app"],
     allow_methods=["*"],
     allow_credentials=True,
     allow_headers=["*"]
